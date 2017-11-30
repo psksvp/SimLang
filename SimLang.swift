@@ -61,7 +61,21 @@ indirect enum Statement :ASTNode
   case If(cond:Expr, body:Statement)
   case IfElse(cond:Expr, trueBody:Statement, falseBody:Statement)
   case While(cond:Expr, body:Statement)
+  case Print(expr:Expr)
 }
+
+class Program :ASTNode 
+{
+  let name:String
+  let block:Statement
+  
+  init(name:String, block:Statement)
+  {
+    self.name = name
+    self.block = block
+  }
+}
+
 
 
 class Machine
@@ -71,6 +85,12 @@ class Machine
   
   init()
   {
+  }
+  
+  func run(program:Program) -> ([String:Type], [String:Value])
+  {
+    execute(statement:program.block)
+    return (register, memory)
   }
 
   
@@ -89,8 +109,9 @@ class Machine
       case let .Assignment(v, e)                  : set(variable:v, toValue:execute(expr:e)) 
       case let .If(e, b)                          : switch execute(expr:e)
                                                     {
-                                                      case let .Boolean(ve) where true == ve : execute(statement:b)
-                                                      default                                : print("TODO pump error")
+                                                      case let .Boolean(ve) where true == ve  : execute(statement:b)
+                                                      case let .Boolean(ve) where false == ve : ()
+                                                      default                                 : print("TODO pump error1")
                                                     }
       case let .IfElse(e, tb, fb)                 : switch execute(expr:e)
                                                     {
@@ -106,7 +127,8 @@ class Machine
                                                                                 execute(statement:Statement.While(cond:e, body:b))
                                                                               }
                                                       default               : print("TODO pump error")
-                                                    }                                             
+                                                    }  
+      case let .Print(e)                          : print(execute(expr:e))                                                               
     }
   }
   
@@ -148,7 +170,7 @@ class Machine
                                  register[n] = withType   // TODO pump error on else
                               }
                           
-      default           : print("Error") // TODO: need to pump error, v is not a variable
+      default               : print("Error") // TODO: need to pump error, v is not a variable
     }
   }
   
@@ -202,42 +224,42 @@ class Machine
       case let (.Minus, .Numeric(n)) : return Value.Numeric(-n)
       case let (.Plus, .Numeric(n))  : return Value.Numeric(+n)
       case let (.Not, .Boolean(n))   : return Value.Boolean(!n)
-      default                    : return Value.Numeric(-1) // just a dummy, pump error                   
+      default                        : return Value.Numeric(-1) // just a dummy, pump error                   
     }
   }
-}
+} // class Machine
 
-
-
-func walk(expr:Expr)
-{
-  switch expr
-  {
-    case let .Literal(e)      : print("visit a lit " + e)
-    case let .Variable(n)     : print("visit a var " + n)
-    case let .Binary(l, _, r) : print("visit a binary")
-                                walk(expr:l)
-                                walk(expr:r)
-    case let .Unary(_, e)     : print("visit a unary")
-                                walk(expr:e)
-  }
-}
 
 func test()
 {
-  let v = Expr.Unary(op: Operator.Minus,
-                     expr: Expr.Variable(name: "g"))
+  let m = Machine()
   
-  let e = Expr.Binary(left: Expr.Literal(rep: "1"),
-                      op: Operator.Plus,
-                      right: Expr.Variable(name: "h"))
-  let e2 = Expr.Binary(left: v, op: Operator.Plus, right: e)
-  
-  
-  print("----------------")
-  walk(expr:e)
-  print("----------------")
-  walk(expr:e2)
+  let s = Statement.Block(body:[Statement.DeclarationAndAssignment(variable:Expr.Variable(name:"a"), 
+                                                                       type:Type.Numeric, 
+                                                                       expr:Expr.Literal(rep:"0")),
+                                Statement.While(cond:Expr.Binary(left:Expr.Variable(name:"a"),
+                                                                   op:Operator.Less, 
+                                                                right:Expr.Literal(rep:"10")),            
+                                                body:Statement.Block(body:[Statement.IfElse(cond:Expr.Binary(left:Expr.Literal(rep:"0"), 
+                                                                                                               op:Operator.NotEqual,
+                                                                                                            right:Expr.Binary(left:Expr.Variable(name:"a"),
+                                                                                                                                op:Operator.Modulo,
+                                                                                                                             right:Expr.Literal(rep:"2"))),
+                                                                                        trueBody:Statement.Print(expr:Expr.Literal(rep:"even")),
+                                                                                       falseBody:Statement.Print(expr:Expr.Literal(rep:"odd"))),
+                                                
+                                                                           Statement.Assignment(variable:Expr.Variable(name:"a"), 
+                                                                                                    expr:Expr.Binary(left:Expr.Variable(name:"a"),
+                                                                                                                       op:Operator.Plus,
+                                                                                                                    right:Expr.Literal(rep:"1")))
+                                                                   ]))                                       
+                               ])
+  let p = Program(name:"Hello", block:s)                        
+  let r = m.run(program:p)  
+  print(r)              
 }
+
+
+
 
 test()
