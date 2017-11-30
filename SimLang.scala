@@ -36,7 +36,7 @@ case class Variable(name:String) extends Expr
 case class Binary(left:Expr, operator:Operator, right:Expr) extends Expr
 case class Unary(operator:Operator, expr:Expr) extends Expr
 
-case class functionCall(name:String, args:Seq[Expr]) extends Expr
+//case class functionCall(name:String, args:Seq[Expr]) extends Expr
 
 abstract class Value extends Expr
 case class NumericValue(value:Float) extends Value
@@ -204,9 +204,11 @@ class Interpreter
                 op:BooleanOperator, 
              right:BooleanValue):BooleanValue = op match
   {
-    case And() => BooleanValue(left.value && right.value)
-    case Or()  => BooleanValue(left.value || right.value)
-    case _     => sys.error("NOT is not a binary op")
+    case Equal()        => BooleanValue(left.value == right.value)
+    case NotEqual()     => BooleanValue(left.value != right.value)
+    case And()          => BooleanValue(left.value && right.value)
+    case Or()           => BooleanValue(left.value || right.value)
+    case _              => sys.error("NOT is not a binary op")
   }
   
   
