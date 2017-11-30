@@ -110,7 +110,7 @@ class Machine
       case let .If(e, b)                          : switch execute(expr:e)
                                                     {
                                                       case let .Boolean(ve) where true == ve  : execute(statement:b)
-                                                      case let .Boolean(ve) where false == ve : ()
+                                                      case let .Boolean(ve) where false == ve : () //skip()
                                                       default                                 : print("TODO pump error1")
                                                     }
       case let .IfElse(e, tb, fb)                 : switch execute(expr:e)
@@ -121,12 +121,10 @@ class Machine
                                                     } 
       case let .While(e, b)                       : switch execute(expr:e)
                                                     {
-                                                      case let .Boolean(ve) : if true == ve
-                                                                              {
-                                                                                execute(statement:b)
-                                                                                execute(statement:Statement.While(cond:e, body:b))
-                                                                              }
-                                                      default               : print("TODO pump error")
+                                                      case let .Boolean(ve) where true == ve  : execute(statement:b)
+                                                                                                execute(statement:Statement.While(cond:e, body:b))
+                                                      case let .Boolean(ve) where false == ve : () //skip()
+                                                      default               : print("TODO pump error e is not a boolean")
                                                     }  
       case let .Print(e)                          : print(execute(expr:e))                                                               
     }
@@ -236,10 +234,13 @@ func test()
   
   let s = Statement.Block(body:[Statement.DeclarationAndAssignment(variable:Expr.Variable(name:"a"), 
                                                                        type:Type.Numeric, 
-                                                                       expr:Expr.Literal(rep:"0")),
+                                                                       expr:Expr.Literal(rep:"1")),
+                                Statement.DeclarationAndAssignment(variable:Expr.Variable(name:"s"), 
+                                                                       type:Type.Numeric, 
+                                                                       expr:Expr.Literal(rep:"0")),                                       
                                 Statement.While(cond:Expr.Binary(left:Expr.Variable(name:"a"),
-                                                                   op:Operator.Less, 
-                                                                right:Expr.Literal(rep:"10")),            
+                                                                   op:Operator.LessOrEqual, 
+                                                                right:Expr.Literal(rep:"1000")),            
                                                 body:Statement.Block(body:[Statement.IfElse(cond:Expr.Binary(left:Expr.Literal(rep:"0"), 
                                                                                                                op:Operator.NotEqual,
                                                                                                             right:Expr.Binary(left:Expr.Variable(name:"a"),
@@ -247,7 +248,10 @@ func test()
                                                                                                                              right:Expr.Literal(rep:"2"))),
                                                                                         trueBody:Statement.Print(expr:Expr.Literal(rep:"even")),
                                                                                        falseBody:Statement.Print(expr:Expr.Literal(rep:"odd"))),
-                                                
+                                                                           Statement.Assignment(variable:Expr.Variable(name:"s"), 
+                                                                                                    expr:Expr.Binary(left:Expr.Variable(name:"s"),
+                                                                                                                       op:Operator.Plus,
+                                                                                                                    right:Expr.Variable(name:"a"))),
                                                                            Statement.Assignment(variable:Expr.Variable(name:"a"), 
                                                                                                     expr:Expr.Binary(left:Expr.Variable(name:"a"),
                                                                                                                        op:Operator.Plus,
