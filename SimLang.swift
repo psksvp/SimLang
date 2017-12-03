@@ -64,6 +64,18 @@ indirect enum Statement :ASTNode
   case Print(expr:Expr)
 }
 
+class Program :ASTNode 
+{
+  let name:String
+  let block:Statement
+  
+  init(name:String, block:Statement)
+  {
+    self.name = name
+    self.block = block
+  }
+}
+
 func string2Value(litString:String) -> Value
 { 
   let f = Float(litString)
@@ -102,31 +114,41 @@ func sameType(_ type:Type, _ value:Value) -> Bool
   }
 }
 
-class Program :ASTNode 
-{
-  let name:String
-  let block:Statement
-  
-  init(name:String, block:Statement)
-  {
-    self.name = name
-    self.block = block
-  }
-}
-
 ///////////////////////////////////////////////////////////////////
-class Environment
+class Environment : CustomStringConvertible
 {
   var memory = [String:Value]()
   var register = [String:Type]()
   
-  func set(vaiableName:String, toValue:Value) -> Void
+  public var description: String 
+  { 
+    return "register contents: \(register.description)\nmemory contents: \(memory.description)"
+  }
+  
+  
+  func name(_ variable:Expr) -> String?
   {
-    guard let t = register[vaiableName] else {return}
+    switch variable
+    {
+      case let .Variable(name) : return name
+      default                  : return nil
+    }
+  }
+  
+  func set(variable:Expr, toValue:Value) -> Void
+  {
+    guard let variableName = name(variable) else {return}
+    guard let t = register[variableName] else {return}
     if(sameType(t, toValue))
     {
-      memory[vaiableName] = toValue
+      memory[variableName] = toValue
     }
+  }
+  
+  func get(variable:Expr) -> Value
+  {
+    let v = memory[name(variable)!] /// error handling ?????
+    return v!
   }
   
   func get(variableName:String) -> Value
@@ -135,26 +157,30 @@ class Environment
     return v!
   }
   
-  func declare(variableName:String, type:Type) -> Void
+  func declare(variable:Expr, type:Type) -> Void
   {
-    register[variableName] = type /// error handling ????? var name is already been there
+    register[name(variable)!] = type /// error handling ????? var name is already been there
   }
 }
 
 ///////////////////////////////////////////////////////////////////
 class Machine
 {
-  var memory = [String:Value]()
-  var register = [String:Type]()
+  let env:Environment 
   
-  init()
+  init(environment:Environment?)
   {
+    switch environment
+    {
+      case let .some(env) : self.env = env
+      case .none          : self.env = Environment()
+    }
   }
   
-  func run(program:Program) -> ([String:Type], [String:Value])
+  func run(program:Program) -> Environment
   {
     execute(statement:program.block)
-    return (register, memory)
+    return env
   }
 
   
@@ -166,11 +192,11 @@ class Machine
                                                     {
                                                       execute(statement:s)
                                                     }                       
-      case let .Declaration(v, t)                 : declare(variable:v, withType:t)
-      case let .DeclarationAndAssignment(v, t, e) : declare(variable:v, withType:t)
-                                                    set(variable:v, toValue:execute(expr:e))
+      case let .Declaration(v, t)                 : env.declare(variable:v, type:t)
+      case let .DeclarationAndAssignment(v, t, e) : env.declare(variable:v, type:t)
+                                                    env.set(variable:v, toValue:execute(expr:e))
       
-      case let .Assignment(v, e)                  : set(variable:v, toValue:execute(expr:e)) 
+      case let .Assignment(v, e)                  : env.set(variable:v, toValue:execute(expr:e)) 
       case let .If(e, b)                          : switch execute(expr:e)
                                                     {
                                                       case let .Boolean(ve) where true == ve  : execute(statement:b)
@@ -200,7 +226,7 @@ class Machine
     switch expr
     {
       case let .Literal(s)      : return string2Value(litString:s)
-      case let .Variable(s)     : return memory[s]!               // TODO: need to check for undefined var
+      case let .Variable(s)     : return env.get(variableName:s)
       case let .Binary(l, o, r) : let lv = execute(expr:l)
                                   let lr = execute(expr:r)
                                   return computeBinaryOp(left:lv, op:o, right:lr)
@@ -209,39 +235,6 @@ class Machine
                                   
     }
   } 
-  
-  func preset(variableName:String, toValue:Value) -> Void
-  {
-    let v = Expr.Variable(name:variableName)
-    declare(variable:v, withType:typeOf(toValue))
-    set(variable:v, toValue:toValue)
-  }
-  
-  func set(variable:Expr, toValue:Value) -> Void
-  {
-    // TODO: need to do a type check between variable type and toValue
-    switch variable
-    {
-      case let .Variable(n) : if nil != register[n]
-                              {
-                                 memory[n] = toValue   // TODO pump error on else
-                              }
-      default               : print("Error") // TODO: need to pump error, v is not a variable 
-    }                      
-  }
-  
-  func declare(variable:Expr, withType:Type) -> Void
-  {
-    switch variable
-    {
-      case let .Variable(n) : if nil == register[n]
-                              {
-                                 register[n] = withType   // TODO pump error on else
-                              }
-                          
-      default               : print("Error") // TODO: need to pump error, v is not a variable
-    }
-  }
   
   //////////////////////////////////////////////////
   func computeBinaryOp(left:Value, op:Operator, right:Value) -> Value
@@ -285,7 +278,7 @@ class Machine
 
 func test()
 {
-  let m = Machine()
+  let m = Machine(environment:nil)
   
   let s = Statement.Block(body:[Statement.DeclarationAndAssignment(variable:Expr.Variable(name:"a"), 
                                                                        type:Type.Numeric, 
