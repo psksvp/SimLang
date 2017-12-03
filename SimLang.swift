@@ -64,6 +64,44 @@ indirect enum Statement :ASTNode
   case Print(expr:Expr)
 }
 
+func string2Value(litString:String) -> Value
+{ 
+  let f = Float(litString)
+  guard f == nil else
+  {
+    return Value.Numeric(f!)
+  }
+  
+  let b = Bool(litString)
+  guard b == nil else
+  {
+    return Value.Boolean(b!)
+  }
+  
+  return Value.Text(litString)
+}
+
+func typeOf(_ value:Value) -> Type
+{
+  switch value
+  {
+    case .Numeric(_) : return Type.Numeric
+    case .Boolean(_) : return Type.Boolean
+    case .Text(_)    : return Type.Text
+  }
+} 
+
+func sameType(_ type:Type, _ value:Value) -> Bool
+{
+  switch (type, value)
+  {
+    case (.Numeric, .Numeric(_)) : return true
+    case (.Boolean, .Boolean(_)) : return true
+    case (.Text, .Text(_))       : return true
+    default                      : return false
+  }
+}
+
 class Program :ASTNode 
 {
   let name:String
@@ -76,8 +114,34 @@ class Program :ASTNode
   }
 }
 
+///////////////////////////////////////////////////////////////////
+class Environment
+{
+  var memory = [String:Value]()
+  var register = [String:Type]()
+  
+  func set(vaiableName:String, toValue:Value) -> Void
+  {
+    guard let t = register[vaiableName] else {return}
+    if(sameType(t, toValue))
+    {
+      memory[vaiableName] = toValue
+    }
+  }
+  
+  func get(variableName:String) -> Value
+  {
+    let v = memory[variableName] /// error handling ?????
+    return v!
+  }
+  
+  func declare(variableName:String, type:Type) -> Void
+  {
+    register[variableName] = type /// error handling ????? var name is already been there
+  }
+}
 
-
+///////////////////////////////////////////////////////////////////
 class Machine
 {
   var memory = [String:Value]()
@@ -146,6 +210,13 @@ class Machine
     }
   } 
   
+  func preset(variableName:String, toValue:Value) -> Void
+  {
+    let v = Expr.Variable(name:variableName)
+    declare(variable:v, withType:typeOf(toValue))
+    set(variable:v, toValue:toValue)
+  }
+  
   func set(variable:Expr, toValue:Value) -> Void
   {
     // TODO: need to do a type check between variable type and toValue
@@ -172,23 +243,7 @@ class Machine
     }
   }
   
-  func string2Value(litString:String) -> Value
-  {
-    if nil != Float(litString)
-    {
-      return Value.Numeric(Float(litString)!)
-    }
-    else if nil != Bool(litString)
-    {
-      return Value.Boolean(Bool(litString)!)
-    }
-    else
-    {
-      return Value.Text(litString)
-    }
-    
-  }
-  
+  //////////////////////////////////////////////////
   func computeBinaryOp(left:Value, op:Operator, right:Value) -> Value
   {
     switch (left, op, right) 
@@ -240,7 +295,7 @@ func test()
                                                                        expr:Expr.Literal(rep:"0")),                                       
                                 Statement.While(cond:Expr.Binary(left:Expr.Variable(name:"a"),
                                                                    op:Operator.LessOrEqual, 
-                                                                right:Expr.Literal(rep:"1000")),            
+                                                                right:Expr.Literal(rep:"10")),            
                                                 body:Statement.Block(body:[Statement.IfElse(cond:Expr.Binary(left:Expr.Literal(rep:"0"), 
                                                                                                                op:Operator.NotEqual,
                                                                                                             right:Expr.Binary(left:Expr.Variable(name:"a"),
@@ -264,6 +319,18 @@ func test()
 }
 
 
+import Cocoa
+
+func test2()
+{
+  let loc = NSEvent.mouseLocation
+  print(loc)
+}
+
+func test3()
+{
+  
+}
 
 
 test()
