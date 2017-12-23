@@ -76,7 +76,7 @@ class Program :ASTNode
   }
 }
 
-func string2Value(litString:String) -> Value
+func string2Value(_ litString:String) -> Value
 { 
   let f = Float(litString)
   guard f == nil else
@@ -116,17 +116,16 @@ func sameType(_ type:Type, _ value:Value) -> Bool
 
 ///////////////////////////////////////////////////////////////////
 class Environment : CustomStringConvertible
-{
-  var memory = [String:Value]()
-  var register = [String:Type]()
+{  
+  private var memory = [String:Value]()
+  private var register = [String:Type]()
   
   public var description: String 
   { 
     return "register contents: \(register.description)\nmemory contents: \(memory.description)"
   }
-  
-  
-  func name(_ variable:Expr) -> String?
+   
+  final func name(_ variable:Expr) -> String?
   {
     switch variable
     {
@@ -135,38 +134,43 @@ class Environment : CustomStringConvertible
     }
   }
   
-  func set(variable:Expr, toValue:Value) -> Void
+  final func set(variable:Expr, toValue:Value) -> Void
   {
     guard let variableName = name(variable) else {return}
-    guard let t = register[variableName] else {return}
-    if(sameType(t, toValue))
-    {
-      memory[variableName] = toValue
-    }
+    set(variableName, toValue)
   }
   
-  func get(variable:Expr) -> Value
+  final func get(variable:Expr) -> Value
   {
-    let v = memory[name(variable)!] /// error handling ?????
-    return v!
+    return get(name(variable)!) /// error handling ?????
   }
   
-  func get(variableName:String) -> Value
-  {
-    let v = memory[variableName] /// error handling ?????
-    return v!
-  }
-  
-  func declare(variable:Expr, type:Type) -> Void
+  final func declare(variable:Expr, type:Type) -> Void
   {
     register[name(variable)!] = type /// error handling ????? var name is already been there
+  }
+  
+  ///////////
+  func set(_ variableName:String, _ value:Value) -> Void
+  {
+    guard let t = register[variableName] else {return}
+    if(sameType(t, value))
+    {
+      memory[variableName] = value
+    }
+    /// error handling ?????
+  }
+  
+  func get(_ variableName:String) -> Value
+  {
+    return memory[variableName]! /// error handling ?????
   }
 }
 
 ///////////////////////////////////////////////////////////////////
 class Machine
 {
-  let env:Environment 
+  private let env:Environment 
   
   init(environment:Environment?)
   {
@@ -225,8 +229,8 @@ class Machine
   {
     switch expr
     {
-      case let .Literal(s)      : return string2Value(litString:s)
-      case let .Variable(s)     : return env.get(variableName:s)
+      case let .Literal(s)      : return string2Value(s)
+      case let .Variable(s)     : return env.get(s)
       case let .Binary(l, o, r) : let lv = execute(expr:l)
                                   let lr = execute(expr:r)
                                   return computeBinaryOp(left:lv, op:o, right:lr)
@@ -276,9 +280,24 @@ class Machine
 } // class Machine
 
 
+import Cocoa
+
+class CocoaEnvironment : Environment
+{
+  override func get(_ variableName:String) -> Value
+  {
+    switch variableName
+    {
+      case "mouseX" : return Value.Numeric(Float(NSEvent.mouseLocation.x))
+      case "mouseY" : return Value.Numeric(Float(NSEvent.mouseLocation.y))
+      default       : return super.get(variableName)
+    }
+  }
+}
+
 func test()
 {
-  let m = Machine(environment:nil)
+  let m = Machine(environment:CocoaEnvironment())
   
   let s = Statement.Block(body:[Statement.DeclarationAndAssignment(variable:Expr.Variable(name:"a"), 
                                                                        type:Type.Numeric, 
@@ -288,7 +307,7 @@ func test()
                                                                        expr:Expr.Literal(rep:"0")),                                       
                                 Statement.While(cond:Expr.Binary(left:Expr.Variable(name:"a"),
                                                                    op:Operator.LessOrEqual, 
-                                                                right:Expr.Literal(rep:"10")),            
+                                                                right:Expr.Literal(rep:"500")),            
                                                 body:Statement.Block(body:[Statement.IfElse(cond:Expr.Binary(left:Expr.Literal(rep:"0"), 
                                                                                                                op:Operator.NotEqual,
                                                                                                             right:Expr.Binary(left:Expr.Variable(name:"a"),
@@ -296,6 +315,8 @@ func test()
                                                                                                                              right:Expr.Literal(rep:"2"))),
                                                                                         trueBody:Statement.Print(expr:Expr.Literal(rep:"even")),
                                                                                        falseBody:Statement.Print(expr:Expr.Literal(rep:"odd"))),
+                                                                           Statement.Print(expr:Expr.Variable(name:"mouseX")),
+                                                                           Statement.Print(expr:Expr.Variable(name:"mouseY")),              
                                                                            Statement.Assignment(variable:Expr.Variable(name:"s"), 
                                                                                                     expr:Expr.Binary(left:Expr.Variable(name:"s"),
                                                                                                                        op:Operator.Plus,
@@ -311,14 +332,6 @@ func test()
   print(r)              
 }
 
-
-import Cocoa
-
-func test2()
-{
-  let loc = NSEvent.mouseLocation
-  print(loc)
-}
 
 func test3()
 {
