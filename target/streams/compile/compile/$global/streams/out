@@ -1,0 +1,6 @@
+[0m[[0m[33mwarn[0m] [0m[0m/Users/psksvp/MyCode/SimLang/src/main/scala/psksvp/SimLang/Interpreter.scala:62:47: match may not be exhaustive.[0m
+[0m[[0m[33mwarn[0m] [0m[0mIt would fail on the following input: Some(_)[0m
+[0m[[0m[33mwarn[0m] [0m[0m    def getValue(name:String):Value = data.get(name) match[0m
+[0m[[0m[33mwarn[0m] [0m[0m                                              ^[0m
+[0m[[0m[33mwarn[0m] [0m[0mthere were three feature warnings; re-run with -feature for details[0m
+[0m[[0m[33mwarn[0m] [0m[0mtwo warnings found[0m
