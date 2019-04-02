@@ -37,12 +37,48 @@
 
 package psksvp.SimLang
 
+import psksvp.SimLang.AST.Program
+
+import scala.util.{Failure, Success}
+
 object Entry
 {
 
   def main(args:Array[String]):Unit=
   {
+    //parseFuncDef()
+    //casPlay()
+    parseArray()
     parseFuncDef()
+  }
+
+  def parseArray():Unit =
+  {
+    val s =
+      """
+        |function main():numeric
+        |{
+        |  var a:Array<numeric>(10)
+        |  sys.print(a[9])
+        |  sys.print(a)
+        |  a[9] = 9
+        |  sys.print(a)
+        |  var i:numeric = 0
+        |  while(i < 9)
+        |  {
+        |    a[i + 1] = i * 2
+        |    i = i + 1
+        |  }
+        |  sys.print(a)
+        |  sys.print("The length of array a is ", sys.length(a))
+        |  sys.print("The length of text helloworld is", sys.length("helloworld"))
+        |}
+      """.stripMargin
+
+    val parser = new Parser()
+    val p = parser.parseAll(parser.program, s).get
+    println(p)
+    println(Interpreter.run(p))
   }
 
   def parseFuncDef():Unit =
@@ -80,6 +116,8 @@ object Entry
         |  }
         |}
         |
+        |
+        |
         |function rsum(a:numeric):numeric
         |{
         |  if(a == 0)
@@ -111,10 +149,21 @@ object Entry
       """.stripMargin
 
 
+    // var a:Array<numeric>(20)
+    // a[0] = 23
+
     val parser = new Parser()
-    val p = parser.parseAll(parser.program, src).get
+    val p = parser.parseAll(parser.program, src)
     println(p)
 
-    println(Interpreter.run(p))
+    println(Interpreter.run(p.get))
+  }
+
+  def casPlay():Unit =
+  {
+    import CAS._
+
+    val e = (Var("x") + 5) * Var("y")
+    println(e)
   }
 }

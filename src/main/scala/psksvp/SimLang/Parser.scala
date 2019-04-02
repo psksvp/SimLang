@@ -80,15 +80,22 @@ class Parser extends JavaTokenParsers with PackratParsers
 
   lazy val variable:PackratParser[Variable] = ident ^^ {v => Variable(v)}
 
-  lazy val varType:PackratParser[Type] = ("numeric" | "boolean" | "text") ^^
+  lazy val arrayRef:PackratParser[ArrayRef] = (ident <~ "[") ~ (expr <~ "]") ^^
   {
-    s => s match
-         {
-           case "numeric" => NumericType()
-           case "boolean" => BooleanType()
-           case "text"    => TextType()
-         }
+    case id ~ e => ArrayRef(Variable(id), e)
   }
+
+  lazy val varType:PackratParser[Type] = numericType | booleanType | textype | arrayType
+
+
+  lazy val numericType:PackratParser[NumericType] = "numeric" ^^ {_ => NumericType()}
+  lazy val booleanType:PackratParser[BooleanType] = "boolean" ^^ {_ => BooleanType()}
+  lazy val textype:PackratParser[TextType] = "text" ^^ {_ => TextType()}
+  lazy val arrayType:PackratParser[ArrayType] = "Array" ~ "<" ~ varType ~ ">" ~ "(" ~ wholeNumber ~ ")" ^^
+  {
+    case _ ~ _ ~ vt ~ _  ~ _  ~ s ~ _ => ArrayType(vt, s.toInt)
+  }
+
 
   lazy val functionCall:PackratParser[FunctionCall] = rep1sep(ident, ".") ~ ("(" ~> exprs <~ ")") ^^
   {
@@ -120,6 +127,7 @@ class Parser extends JavaTokenParsers with PackratParsers
 
   lazy val factor:PackratParser[Expr] =
     functionCall | valueLit  |
+    arrayRef |
     ident ^^ {v => Variable(v)} |
     uopDef ~ mexpDef  ^^ {case op ~ exp => Unary(op, exp)} |
     "(" ~> mexpDef <~ ")"
@@ -140,17 +148,12 @@ class Parser extends JavaTokenParsers with PackratParsers
   lazy val paramList:PackratParser[Seq[VariableDeclaration]] = repsep(paramDecl, ",")
 
   ///// statements
-  lazy val statement: PackratParser[Statement] = block | print | ifElse | ifCond | whileLoop | procedureCall |
-                                                 varDeclAssignment| varDecl | assignment
+  lazy val statement: PackratParser[Statement] = block | ifElse | ifCond | whileLoop | procedureCall |
+                                                 varDeclAssignment| varDecl | arrayAssignment | assignment
 
   lazy val block:PackratParser[Block] = "{" ~> (statement *) <~ "}" ^^
   {
     s => Block(s)
-  }
-
-  lazy val print:PackratParser[Print] = "sys.print" ~> ("(" ~> exprs <~ ")")  ^^
-  {
-    e => Print(e)
   }
 
   lazy val ifElse:PackratParser[IfElse] = "if" ~> ("(" ~> expr <~ ")") ~ statement ~ ("else" ~> statement) ^^
@@ -186,6 +189,11 @@ class Parser extends JavaTokenParsers with PackratParsers
   lazy val assignment:PackratParser[Assignment] = (ident <~ "=") ~ expr ^^
   {
     case id ~ e => Assignment(Variable(id), e)
+  }
+
+  lazy val arrayAssignment:PackratParser[ArrayAssignment] = (arrayRef <~ "=") ~ expr ^^
+  {
+    case ar ~ e => ArrayAssignment(ar, e)
   }
 
   lazy val procedureCall:PackratParser[ProcedureCall] = functionCall ^^

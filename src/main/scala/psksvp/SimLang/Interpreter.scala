@@ -78,8 +78,8 @@ object Interpreter
     }
   }
 
-  case class Environment(memory:Memory = new Memory())
-  
+  case class Frame(memory:Memory = new Memory())
+
 
   def findFunction(signature:FunctionSignature, program:Program):Option[FunctionDef] =
   {
@@ -115,8 +115,8 @@ object Interpreter
   }
 
   def run(program:Program):Option[Value] = apply(program)
-  
-  def literal2Value(l:String):Value = 
+
+  def literal2Value(l:String):Value =
   {
     try
     {
@@ -130,20 +130,22 @@ object Interpreter
                           }
                           catch
                           {
-                            case _:Exception => TextValue(l)
+                            case _:Exception => TextValue(l.substring(1, l.length - 1))
                           }
     }
-    
+
   }
-  
+
   def typeAgree(t:Type, v:Value):Boolean =
   {
     (t, v) match
     {
-      case (_:NumericType, _:NumericValue) => true
-      case (_:BooleanType, _:BooleanValue) => true
-      case (_:TextType, _:TextValue)       => true
-      case _                               => false
+      case (_:NumericType, _:NumericValue)                   => true
+      case (_:BooleanType, _:BooleanValue)                   => true
+      case (_:TextType, _:TextValue)                         => true
+      case (a:ArrayType, b:ArrayValue)
+           if a.ctype == b.ctype && a.size == b.value.length => true
+      case _                                                 => false
     }
   }
 
@@ -151,7 +153,16 @@ object Interpreter
   {
     case NumericType() => NumericValue(0)
     case TextType()    => TextValue("")
-    case BooleanType() => BooleanValue(true)
+    case BooleanType() => BooleanValue(false)
+    case ArrayType(at, s) => defaultArrayValue(at, s)
+  }
+
+  def defaultArrayValue(t:Type, size:Int):Value = t match
+  {
+    case NumericType() => ArrayValue(Array.fill[Value](size)(NumericValue(0)), NumericType())
+    case TextType()    => ArrayValue(Array.fill[Value](size)(TextValue("")), TextType())
+    case BooleanType() => ArrayValue(Array.fill[Value](size)(BooleanValue(false)), BooleanType())
+    case _             => defaultValue(t)
   }
 }
 
@@ -164,13 +175,13 @@ class Interpreter(program:AST.Program)
   import Interpreter._
   import AST._
 
-  private var envs:Seq[Environment] = Nil //Seq(Environment())
+  private var envs:Seq[Frame] = Nil //Seq(Environment())
 
-  private def top:Environment = envs.head
-  private def push():Unit = envs = Environment() +: envs
+  private def top:Frame = envs.head
+  private def push():Unit = envs = Frame() +: envs
   private def pop():Unit = envs = envs.tail
 
-  private def lookupVar(s:String):Option[Environment] = envs.find{e => e.memory.has(s)}
+  private def lookupVar(s:String):Option[Frame] = envs.find{ e => e.memory.has(s)}
 
   def dump():Unit = envs.foreach(println(_))
 
@@ -182,6 +193,13 @@ class Interpreter(program:AST.Program)
                                                                          case Some(env) => env.memory(n)
                                                                          case None      => sys.error(s"$expr is used without declaration")
                                                                        }
+
+    case ArrayRef(v, e)                                             => (evaluate(v), evaluate(e)) match
+                                                                       {
+                                                                         case (ArrayValue(a, _), NumericValue(i)) => a(i.toInt)
+                                                                         case _                                   => sys.error("ArrayRef error")
+                                                                       }
+
     case Binary(l:NumericValue, op:NumericOperator, r:NumericValue) => compute(l, op, r)
     case Binary(l:NumericValue, op:BooleanOperator, r:NumericValue) => compute(l, op, r)
     case Binary(l:BooleanValue, op:BooleanOperator, r:BooleanValue) => compute(l, op, r)
@@ -190,8 +208,9 @@ class Interpreter(program:AST.Program)
     case Unary(op:Minus, v:NumericValue)                            => NumericValue(-v.value)
     case Unary(op:Not, v:BooleanValue)                              => BooleanValue(!v.value)
     case Unary(op, e)                                               => evaluate(Unary(op, evaluate(e)))
-    case FunctionCall(n, parms)                                     => val p = for(e <- parms) yield evaluate(e)
-                                                                       invokeFunction(n, p)
+    case FunctionCall(n, parms)                                     => invokeFunction(n, parms, NumericValue(0))
+                                                                       //val p = for(e <- parms) yield evaluate(e)
+                                                                       //invokeFunction(n, p)
     case _                                                          => sys.error(s"error executing $expr")
   }
 
@@ -218,6 +237,17 @@ class Interpreter(program:AST.Program)
                                                                          sys.error(s"type mismatch at $statement")
                                                      case None      => sys.error(s"$v is used without declaration")
                                                    }
+
+    case ArrayAssignment(ArrayRef(v, ie), e)    => (evaluate(v), evaluate(ie)) match
+                                                   {
+                                                     case (ArrayValue(a, t), NumericValue(i)) => val r = evaluate(e)
+                                                                                                  if(typeAgree(t, r))
+                                                                                                    a(i.toInt) = r  //need to check array bound
+                                                                                                  else
+                                                                                                    sys.error(s"type mismatch at $statement")
+                                                     case _                                   => sys.error("ArrayRef assignment error")
+                                                   }
+
     case ProcedureCall(f)                       => evaluate(f)
 
     case If(e:BooleanValue, b)                  => if(e.value) execute(b)
@@ -241,8 +271,6 @@ class Interpreter(program:AST.Program)
                                                      case _                  => sys.error(s"syntax error at $statement")
                                                    }
 
-    case Print(es)                               => es.foreach{e => print(s"${evaluate(e)} ")}
-                                                    println()
     case _                                       => sys.error(s"syntax error at $statement")
   }
 
@@ -282,15 +310,40 @@ class Interpreter(program:AST.Program)
     case _              => sys.error("NOT is not a binary op")
   }
 
+  def invokeFunction(name:String, params:Seq[Expr], defaultResult:Value):Value =
+  {
+    (name, params) match
+    {
+      case ("sys.length", Variable(a) :: Nil) => val length = top.memory.getType(a) match
+                                                  {
+                                                    case ArrayType(_, size) => size
+                                                    case TextType()         => top.memory(a).asInstanceOf[TextValue].value.length
+                                                    case _                  => 1
+                                                  }
+                                                  NumericValue(length)
+
+      case ("sys.print", es)                   => es.foreach{e => print(s"${evaluate(e)} ")}
+                                                  println()
+                                                  defaultResult
+
+      case _                                   => val args = for(p <- params) yield evaluate(p)
+                                                  invokeFunction(name, args)
+    }
+  }
+
   def invokeFunction(name:String, params:Seq[Value]):Value =
   {
     (name, params) match
     {
+      case ("sys.length", TextValue(s) :: Nil)                       => NumericValue(s.length)
+      case ("sys.length", _)                                         => NumericValue(1)
       case ("math.cos", NumericValue(v) :: Nil)                      => NumericValue(math.cos(v).toFloat)
       case ("math.sin", NumericValue(v) :: Nil)                      => NumericValue(math.sin(v).toFloat)
       case ("math.tan", NumericValue(v) :: Nil)                      => NumericValue(math.tan(v).toFloat)
       case ("math.sqrt", NumericValue(v) :: Nil)                     => NumericValue(math.sqrt(v).toFloat)
       case ("math.power", NumericValue(v) :: NumericValue(p) :: Nil) => NumericValue(math.pow(v, p).toFloat)
+
+
 
       case _          => findFunction(name, params, program) match
                          {
