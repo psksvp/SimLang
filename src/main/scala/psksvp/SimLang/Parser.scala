@@ -52,6 +52,18 @@ class Parser extends JavaTokenParsers with PackratParsers
 {
   import AST._
 
+  def parseProgram(text:String):Program =
+  {
+    parseAll(program, text) match
+    {
+      case Success(result, _) => result
+      case Failure(msg, _)    => sys.error(s"error while parsing program : $msg")
+      case Error(msg, _)      => sys.error(s"error while parsing program : $msg")
+    }
+  }
+
+
+  ///////////////////////////////////////////////////////////////////////////////////////////
   implicit def toOp(s:String):Operator = s match
   {
     case "+" => Plus()
@@ -72,7 +84,14 @@ class Parser extends JavaTokenParsers with PackratParsers
     case _    => sys.error(s"psksvp.SimLang.Parser.toOp don't know symbol $s")
   }
 
-  lazy val valueLit:PackratParser[Literal] = (stringLiteral | "true" | "false" | floatingPointNumber | wholeNumber | decimalNumber) ^^
+
+  lazy val arrayLit:PackratParser[String] = "[" ~> repsep(valueLit, ",") <~ "]" ^^
+  {
+    seq => val litString = for(l <- seq) yield l.string
+           s"[${litString.mkString(",")}]"
+  }
+
+  lazy val valueLit:PackratParser[Literal] = (arrayLit | stringLiteral | "true" | "false" | floatingPointNumber | wholeNumber | decimalNumber) ^^
   {
     s => Literal(s)
   }
@@ -91,9 +110,13 @@ class Parser extends JavaTokenParsers with PackratParsers
   lazy val numericType:PackratParser[NumericType] = "numeric" ^^ {_ => NumericType()}
   lazy val booleanType:PackratParser[BooleanType] = "boolean" ^^ {_ => BooleanType()}
   lazy val textype:PackratParser[TextType] = "text" ^^ {_ => TextType()}
-  lazy val arrayType:PackratParser[ArrayType] = "Array" ~ "<" ~ varType ~ ">" ~ "(" ~ wholeNumber ~ ")" ^^
+
+  lazy val arraySpecType:PackratParser[Type] = ("Array" ~ "<") ~> varType <~ ">"
+  lazy val arraySpecSize:PackratParser[Int] = "(" ~> wholeNumber <~ ")" ^^ {n => n.toInt}
+
+  lazy val arrayType:PackratParser[ArrayType] = (arraySpecType) ~ (arraySpecSize?) ^^
   {
-    case _ ~ _ ~ vt ~ _  ~ _  ~ s ~ _ => ArrayType(vt, s.toInt)
+    case vt ~ s => ArrayType(vt, s)
   }
 
 
@@ -149,7 +172,7 @@ class Parser extends JavaTokenParsers with PackratParsers
 
   ///// statements
   lazy val statement: PackratParser[Statement] = block | ifElse | ifCond | whileLoop | procedureCall |
-                                                 varDeclAssignment| varDecl | arrayAssignment | assignment
+                                                 varDeclAssignment| varDecl |  assignment
 
   lazy val block:PackratParser[Block] = "{" ~> (statement *) <~ "}" ^^
   {
@@ -186,14 +209,9 @@ class Parser extends JavaTokenParsers with PackratParsers
     case decl ~ e => VariableDeclarationAssignment(decl.ptype, decl.name, e)
   }
 
-  lazy val assignment:PackratParser[Assignment] = (ident <~ "=") ~ expr ^^
+  lazy val assignment:PackratParser[Assignment] = ((arrayRef | variable) <~ "=") ~ expr ^^
   {
-    case id ~ e => Assignment(Variable(id), e)
-  }
-
-  lazy val arrayAssignment:PackratParser[ArrayAssignment] = (arrayRef <~ "=") ~ expr ^^
-  {
-    case ar ~ e => ArrayAssignment(ar, e)
+    case lexpr ~ rexpr => Assignment(lexpr, rexpr)
   }
 
   lazy val procedureCall:PackratParser[ProcedureCall] = functionCall ^^

@@ -118,22 +118,55 @@ object Interpreter
 
   def literal2Value(l:String):Value =
   {
-    try
+    import scala.util.parsing.combinator.{JavaTokenParsers, PackratParsers}
+
+    object LiteralParser extends JavaTokenParsers with PackratParsers
     {
-      NumericValue(l.toFloat)
-    }
-    catch
-    {
-      case _:Exception => try
-                          {
-                            BooleanValue(l.toBoolean)
-                          }
-                          catch
-                          {
-                            case _:Exception => TextValue(l.substring(1, l.length - 1))
-                          }
+      lazy val numericArrayValueP:PackratParser[ArrayValue] = "[" ~> repsep(numericValueP, ",") <~ "]" ^^
+      {
+        seq => ArrayValue(seq.toArray, NumericType())
+      }
+
+      lazy val boolArrayValueP:PackratParser[ArrayValue] = "[" ~> repsep(booleanValueP, ",") <~ "]" ^^
+      {
+        seq => ArrayValue(seq.toArray, BooleanType())
+      }
+
+      lazy val textArrayValueP:PackratParser[ArrayValue] = "[" ~> repsep(textValueP, ",") <~ "]" ^^
+      {
+        seq => ArrayValue(seq.toArray, TextType())
+      }
+
+      lazy val numericValueP:PackratParser[NumericValue] = (floatingPointNumber | wholeNumber) ^^
+      {
+        n => NumericValue(n.toFloat)
+      }
+
+      lazy val booleanValueP:PackratParser[BooleanValue] = ("true" | "false") ^^
+      {
+        n => BooleanValue(n.toBoolean)
+      }
+
+      lazy val textValueP:PackratParser[TextValue] = stringLiteral ^^
+      {
+        n => TextValue(n.substring(1, n.length - 1))
+      }
+
+      lazy val valueP:PackratParser[Value] = numericValueP | booleanValueP | textValueP |
+                                              numericArrayValueP | boolArrayValueP | textArrayValueP
+
+      def apply(text:String):Value =
+      {
+        parseAll(valueP, text) match
+        {
+          case Success(result, _) => result
+          case Failure(msg, _)    => sys.error(s"error while parsing literal : $msg")
+          case Error(msg, _)      => sys.error(s"error while parsing literal : $msg")
+        }
+      }
     }
 
+    LiteralParser(l)
   }
 
   def typeAgree(t:Type, v:Value):Boolean =
@@ -143,18 +176,18 @@ object Interpreter
       case (_:NumericType, _:NumericValue)                   => true
       case (_:BooleanType, _:BooleanValue)                   => true
       case (_:TextType, _:TextValue)                         => true
-      case (a:ArrayType, b:ArrayValue)
-           if a.ctype == b.ctype && a.size == b.value.length => true
+      case (a:ArrayType, b:ArrayValue) if a.ctype == b.ctype => true
       case _                                                 => false
     }
   }
 
   def defaultValue(t:Type):Value = t match
   {
-    case NumericType() => NumericValue(0)
-    case TextType()    => TextValue("")
-    case BooleanType() => BooleanValue(false)
-    case ArrayType(at, s) => defaultArrayValue(at, s)
+    case NumericType()             => NumericValue(0)
+    case TextType()                => TextValue("")
+    case BooleanType()             => BooleanValue(false)
+    case ArrayType(at, Some(size)) => defaultArrayValue(at, size)
+    case ArrayType(at, None)       => defaultArrayValue(at, 0)
   }
 
   def defaultArrayValue(t:Type, size:Int):Value = t match
@@ -209,8 +242,7 @@ class Interpreter(program:AST.Program)
     case Unary(op:Not, v:BooleanValue)                              => BooleanValue(!v.value)
     case Unary(op, e)                                               => evaluate(Unary(op, evaluate(e)))
     case FunctionCall(n, parms)                                     => invokeFunction(n, parms, NumericValue(0))
-                                                                       //val p = for(e <- parms) yield evaluate(e)
-                                                                       //invokeFunction(n, p)
+
     case _                                                          => sys.error(s"error executing $expr")
   }
 
@@ -228,17 +260,17 @@ class Interpreter(program:AST.Program)
     case VariableDeclarationAssignment(t, n, e) => execute(VariableDeclaration(t, n))
                                                    execute(Assignment(Variable(n), e))
 
-    case Assignment(v, e)                       => lookupVar(v.name) match
+    case Assignment(Variable(v), e)             => lookupVar(v) match
                                                    {
                                                      case Some(env) => val r = evaluate(e)
-                                                                       if(typeAgree(env.memory.getType(v.name), r))
-                                                                         env.memory(v.name) = r
+                                                                       if(typeAgree(env.memory.getType(v), r))
+                                                                         env.memory(v) = r
                                                                        else
                                                                          sys.error(s"type mismatch at $statement")
                                                      case None      => sys.error(s"$v is used without declaration")
                                                    }
 
-    case ArrayAssignment(ArrayRef(v, ie), e)    => (evaluate(v), evaluate(ie)) match
+    case Assignment(ArrayRef(v, ie), e)         => (evaluate(v), evaluate(ie)) match
                                                    {
                                                      case (ArrayValue(a, t), NumericValue(i)) => val r = evaluate(e)
                                                                                                   if(typeAgree(t, r))
@@ -314,11 +346,11 @@ class Interpreter(program:AST.Program)
   {
     (name, params) match
     {
-      case ("sys.length", Variable(a) :: Nil) => val length = top.memory.getType(a) match
+      case ("sys.length", Variable(a) :: Nil) => val length = top.memory.getValue(a) match
                                                   {
-                                                    case ArrayType(_, size) => size
-                                                    case TextType()         => top.memory(a).asInstanceOf[TextValue].value.length
-                                                    case _                  => 1
+                                                    case ArrayValue(v, _) => v.length
+                                                    case TextValue(v)     => v.length
+                                                    case _                => 1
                                                   }
                                                   NumericValue(length)
 
@@ -343,8 +375,7 @@ class Interpreter(program:AST.Program)
       case ("math.sqrt", NumericValue(v) :: Nil)                     => NumericValue(math.sqrt(v).toFloat)
       case ("math.power", NumericValue(v) :: NumericValue(p) :: Nil) => NumericValue(math.pow(v, p).toFloat)
 
-
-
+        
       case _          => findFunction(name, params, program) match
                          {
                            case Some(function) => invokeFunction(function, params)

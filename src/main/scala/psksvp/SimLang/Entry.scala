@@ -37,10 +37,6 @@
 
 package psksvp.SimLang
 
-import psksvp.SimLang.AST.Program
-
-import scala.util.{Failure, Success}
-
 object Entry
 {
 
@@ -72,11 +68,36 @@ object Entry
         |  sys.print(a)
         |  sys.print("The length of array a is ", sys.length(a))
         |  sys.print("The length of text helloworld is", sys.length("helloworld"))
+        |
+        |
+        |  var b:Array<numeric>
+        |
+        |  b = [1, 2, 3, 4]
+        |  sys.print(b)
+        |  sys.print("The length of b is ", sys.length(b))
+        |
+        |  var c:Array<text> = ["Hello", "World"]
+        |  sys.print(c)
+        |
+        |  sys.print(sum(b))
+        |  sys.print(b)
+        |}
+        |
+        |function sum(a:Array<numeric>):numeric
+        |{
+        |  sum = 0
+        |  var i:numeric = 0
+        |  while(i < sys.length(a))
+        |  {
+        |    sum = sum + a[i]
+        |    i = i + 1
+        |  }
+        |  a[0] = 20
         |}
       """.stripMargin
 
-    val parser = new Parser()
-    val p = parser.parseAll(parser.program, s).get
+
+    val p = new Parser().parseProgram(s)
     println(p)
     println(Interpreter.run(p))
   }
@@ -116,8 +137,6 @@ object Entry
         |  }
         |}
         |
-        |
-        |
         |function rsum(a:numeric):numeric
         |{
         |  if(a == 0)
@@ -149,14 +168,9 @@ object Entry
       """.stripMargin
 
 
-    // var a:Array<numeric>(20)
-    // a[0] = 23
-
-    val parser = new Parser()
-    val p = parser.parseAll(parser.program, src)
+    val p = new Parser().parseProgram(src)
     println(p)
-
-    println(Interpreter.run(p.get))
+    println(Interpreter.run(p))
   }
 
   def casPlay():Unit =

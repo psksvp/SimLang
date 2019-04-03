@@ -10,6 +10,8 @@
 [0m[[0m[0mdebug[0m] [0m[0m	  /Users/psksvp/MyCode/SimLang/target/scala-2.12/classes/psksvp/SimLang/AST$FunctionCall.class[0m
 [0m[[0m[0mdebug[0m] [0m[0m	psksvp/SimLang/Interpreter$Frame.class[0m
 [0m[[0m[0mdebug[0m] [0m[0m	  /Users/psksvp/MyCode/SimLang/target/scala-2.12/classes/psksvp/SimLang/Interpreter$Frame.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	psksvp/SimLang/Interpreter$LiteralParser$1$.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /Users/psksvp/MyCode/SimLang/target/scala-2.12/classes/psksvp/SimLang/Interpreter$LiteralParser$1$.class[0m
 [0m[[0m[0mdebug[0m] [0m[0m	psksvp/SimLang/AST$BooleanValue.class[0m
 [0m[[0m[0mdebug[0m] [0m[0m	  /Users/psksvp/MyCode/SimLang/target/scala-2.12/classes/psksvp/SimLang/AST$BooleanValue.class[0m
 [0m[[0m[0mdebug[0m] [0m[0m	psksvp/SimLang/AST$Value.class[0m
@@ -74,8 +76,6 @@
 [0m[[0m[0mdebug[0m] [0m[0m	  /Users/psksvp/MyCode/SimLang/target/scala-2.12/classes/psksvp/SimLang/CAS$sin$.class[0m
 [0m[[0m[0mdebug[0m] [0m[0m	psksvp/SimLang/AST$Minus$.class[0m
 [0m[[0m[0mdebug[0m] [0m[0m	  /Users/psksvp/MyCode/SimLang/target/scala-2.12/classes/psksvp/SimLang/AST$Minus$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	psksvp/SimLang/AST$Print$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	  /Users/psksvp/MyCode/SimLang/target/scala-2.12/classes/psksvp/SimLang/AST$Print$.class[0m
 [0m[[0m[0mdebug[0m] [0m[0m	psksvp/SimLang/AST$ArrayRef$.class[0m
 [0m[[0m[0mdebug[0m] [0m[0m	  /Users/psksvp/MyCode/SimLang/target/scala-2.12/classes/psksvp/SimLang/AST$ArrayRef$.class[0m
 [0m[[0m[0mdebug[0m] [0m[0m	psksvp/SimLang/AST$FunctionDef.class[0m
@@ -154,8 +154,6 @@
 [0m[[0m[0mdebug[0m] [0m[0m	  /Users/psksvp/MyCode/SimLang/target/scala-2.12/classes/psksvp/SimLang/AST$Or.class[0m
 [0m[[0m[0mdebug[0m] [0m[0m	psksvp/SimLang/AST$Greater$.class[0m
 [0m[[0m[0mdebug[0m] [0m[0m	  /Users/psksvp/MyCode/SimLang/target/scala-2.12/classes/psksvp/SimLang/AST$Greater$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	psksvp/SimLang/AST$ArrayAssignment$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	  /Users/psksvp/MyCode/SimLang/target/scala-2.12/classes/psksvp/SimLang/AST$ArrayAssignment$.class[0m
 [0m[[0m[0mdebug[0m] [0m[0m	psksvp/SimLang/AST$Literal.class[0m
 [0m[[0m[0mdebug[0m] [0m[0m	  /Users/psksvp/MyCode/SimLang/target/scala-2.12/classes/psksvp/SimLang/AST$Literal.class[0m
 [0m[[0m[0mdebug[0m] [0m[0m	psksvp/SimLang/AST$GreaterEqual.class[0m
@@ -170,8 +168,6 @@
 [0m[[0m[0mdebug[0m] [0m[0m	  /Users/psksvp/MyCode/SimLang/target/scala-2.12/classes/psksvp/SimLang/AST$Variable$.class[0m
 [0m[[0m[0mdebug[0m] [0m[0m	psksvp/SimLang/AST$Term.class[0m
 [0m[[0m[0mdebug[0m] [0m[0m	  /Users/psksvp/MyCode/SimLang/target/scala-2.12/classes/psksvp/SimLang/AST$Term.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	psksvp/SimLang/AST$ArrayAssignment.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	  /Users/psksvp/MyCode/SimLang/target/scala-2.12/classes/psksvp/SimLang/AST$ArrayAssignment.class[0m
 [0m[[0m[0mdebug[0m] [0m[0m	psksvp/SimLang/AST$ArrayType$.class[0m
 [0m[[0m[0mdebug[0m] [0m[0m	  /Users/psksvp/MyCode/SimLang/target/scala-2.12/classes/psksvp/SimLang/AST$ArrayType$.class[0m
 [0m[[0m[0mdebug[0m] [0m[0m	psksvp/SimLang/AST$Binary.class[0m
@@ -234,8 +230,6 @@
 [0m[[0m[0mdebug[0m] [0m[0m	  /Users/psksvp/MyCode/SimLang/target/scala-2.12/classes/psksvp/SimLang/AST$BooleanOperator.class[0m
 [0m[[0m[0mdebug[0m] [0m[0m	psksvp/SimLang/AST$Div$.class[0m
 [0m[[0m[0mdebug[0m] [0m[0m	  /Users/psksvp/MyCode/SimLang/target/scala-2.12/classes/psksvp/SimLang/AST$Div$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	psksvp/SimLang/AST$Print.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	  /Users/psksvp/MyCode/SimLang/target/scala-2.12/classes/psksvp/SimLang/AST$Print.class[0m
 [0m[[0m[0mdebug[0m] [0m[0m	psksvp/SimLang/AST$TextValue$.class[0m
 [0m[[0m[0mdebug[0m] [0m[0m	  /Users/psksvp/MyCode/SimLang/target/scala-2.12/classes/psksvp/SimLang/AST$TextValue$.class[0m
 [0m[[0m[0minfo[0m] [0m[0mDone packaging.[0m

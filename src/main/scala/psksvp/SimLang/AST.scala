@@ -48,7 +48,7 @@ object AST
   case class NumericType() extends Type
   case class BooleanType() extends Type
   case class TextType() extends Type
-  case class ArrayType(ctype:Type, size:Int) extends Type
+  case class ArrayType(ctype:Type, size:Option[Int]) extends Type
 
   /////////////////
   abstract class Operator(val resultType: Type)
@@ -105,6 +105,7 @@ object AST
 
   case class ArrayValue(value:Array[Value], ctype:Type) extends Value
   {
+    def length:Int = value.length
     override def toString: String = s"[${value.mkString(",")}]"
   }
 
@@ -114,12 +115,10 @@ object AST
   case class Block(statements: Seq[Statement]) extends Statement
   case class VariableDeclaration(ptype: Type, name: String) extends Statement
   case class VariableDeclarationAssignment(ptype: Type, name: String, expr: Expr) extends Statement
-  case class Assignment(variable: Variable, expr: Expr) extends Statement
-  case class ArrayAssignment(a:ArrayRef, expr: Expr) extends Statement
+  case class Assignment(left:Expr, right:Expr) extends Statement
   case class If(expr: Expr, block: Block) extends Statement
   case class IfElse(expr: Expr, trueBlock: Block, falseBlock: Block) extends Statement
   case class While(expr: Expr, block: Block) extends Statement
-  case class Print(exprs: Seq[Expr]) extends Statement
   case class ProcedureCall(function:FunctionCall) extends Statement
   ///////////////////////////
 
@@ -128,5 +127,4 @@ object AST
   case class Program(functions:Seq[FunctionDef]) extends Term
 
   val mainSignature:FunctionSignature = FunctionSignature("main", NumericType(), Nil)
-
 }
