@@ -101,6 +101,11 @@ object Entry
         |  }
         |  a[0] = 20
         |}
+        |
+        |function randomA(a:numeric):array<numeric>
+        |{
+        |  randomA = 
+        |}
       """.stripMargin
 
 

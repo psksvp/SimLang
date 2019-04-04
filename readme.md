@@ -1,4 +1,5 @@
 # SimLang the simplest imperative language (I think).
+by psksvp@gmail.com (pongsak suvanpong)
 
 I wrote this a few year back to learn Scala programming language and to learn how language processing works (how to implement a language). So I decided to implement a simple imperative language which I call *SimLang*. The syntax of the language was taken from C, Java, Scala and Pascal language. However inner function is not supported. There is no user defined type and object.
 
