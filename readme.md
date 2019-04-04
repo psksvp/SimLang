@@ -137,6 +137,28 @@ function main():numeric
 }
 ~~~
 
+An array is passed to a function by reference.
+
+~~~
+function main():numeric
+{
+  var b = [1, 2, 3, 4]
+  sys.print(b)
+  randomA(b)
+  sys.print(b)
+}
+
+function randomA(a:array<numeric>):numeric
+{
+  var i = 0
+  while(i < sys.length(a))
+  {
+    a[i] = sys.random()
+    i = i + 1
+  }
+}
+~~~ 
+
 ### Recursion
 
 Recursion is supported. The example below shows a recursion function which sums the number from 1 to a.

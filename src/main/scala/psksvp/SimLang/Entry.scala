@@ -88,6 +88,9 @@ object Entry
         |  var re = text.concat("hello ", "world ", "of ", "code", 100, 10.20, false)
         |
         |  sys.print(re)
+        |
+        |  sys.print(randomA(b))
+        |  sys.print(b)
         |}
         |
         |function sum(a:array<numeric>):numeric
@@ -102,11 +105,32 @@ object Entry
         |  a[0] = 20
         |}
         |
-        |function randomA(a:numeric):array<numeric>
+        |function randomA(a:array<numeric>):numeric
         |{
-        |  randomA = 
+        |  var i = 0
+        |  while(i < sys.length(a))
+        |  {
+        |    a[i] = sys.random()
+        |    i = i + 1
+        |  }
         |}
       """.stripMargin
+
+
+
+
+//        |function randomA(a:numeric):array<numeric>
+//        |{
+//        |  var result:array<numeric>(a)
+//        |  var i = 0
+//        |  while(i < sys.length(result))
+//        |  {
+//        |    result[i] = sys.random()
+//        |    i = i + 1
+//        |  }
+//        |  randomA = result
+//        |}
+
 
 
     val p = new Parser().parseProgram(s)
