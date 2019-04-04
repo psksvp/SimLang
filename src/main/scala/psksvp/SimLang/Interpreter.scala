@@ -379,6 +379,8 @@ class Interpreter(program:AST.Program)
   {
     (name, params) match
     {
+      case ("sys.random", Nil)                                       => NumericValue(math.random().toFloat)
+
       case ("sys.length", TextValue(s) :: Nil)                       => NumericValue(s.length)
       case ("sys.length", _)                                         => NumericValue(1)
 
