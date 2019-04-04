@@ -24,7 +24,7 @@ function main():numeric
 
 ### Data Type 
 
-SimLang support the following data type.
+SimLang supports the following data type.
 
 * *numeric* is 32 bits wide which can be both real and whole number.
 * *boolean* : true, false
@@ -51,7 +51,7 @@ function main():numeric
 }
 ~~~
 
-The code below shows variables declaration with type infer from the right hand side of the assignment symbol (=)
+The code below shows variables declaration with type infered from the right hand side of the assignment symbol (=)
 
 ~~~
 function main():numeric
@@ -118,7 +118,9 @@ function main():numeric
 
 A function in SimLang can have zero or more parameter. It **must** produce a value of any of the supported types. 
 
-The function **main** which is the entry point of a program *must* produce a *numeric* value type. The function main in the code listing below produces NumericValue(0) by default.
+The function **main** which is the entry point of a program. It *must* produce a *numeric* value type. 
+
+The function main in the code listing below produces NumericValue(0) by default.
 
 ~~~
 function main():numeric
