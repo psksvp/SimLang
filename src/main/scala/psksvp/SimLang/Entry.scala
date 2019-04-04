@@ -93,6 +93,10 @@ object Entry
         |
         |  var ra = randomGen(6)
         |  sys.print(ra)
+        |
+        |  sys.print("----------------")
+        |  var hkl = text.concat("12343", 1234)
+        |  sys.print(hkl)
         |}
         |
         |function sum(a:array<numeric>):numeric

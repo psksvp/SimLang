@@ -247,10 +247,18 @@ class Interpreter(program:AST.Program)
     case Binary(l:NumericValue, op:NumericOperator, r:NumericValue) => compute(l, op, r)
     case Binary(l:NumericValue, op:BooleanOperator, r:NumericValue) => compute(l, op, r)
     case Binary(l:BooleanValue, op:BooleanOperator, r:BooleanValue) => compute(l, op, r)
+
+    case Binary(TextValue(_), _ , TextValue(_)) |
+         Binary(_, _, TextValue(_))              |
+         Binary(TextValue(_), _, _)                                 => sys.error(s"unsupported binary op $expr")
+
     case Binary(l, op, r)                                           => evaluate(Binary(evaluate(l), op, evaluate(r)))
     case Unary(op:Plus, v:NumericValue)                             => NumericValue(+v.value)
     case Unary(op:Minus, v:NumericValue)                            => NumericValue(-v.value)
     case Unary(op:Not, v:BooleanValue)                              => BooleanValue(!v.value)
+
+    case Unary(_, TextValue(_))                                     => sys.error(s"unsupported unary op $expr")
+
     case Unary(op, e)                                               => evaluate(Unary(op, evaluate(e)))
     case FunctionCall(n, parms)                                     => invokeFunction(n, parms, NumericValue(0))
 
