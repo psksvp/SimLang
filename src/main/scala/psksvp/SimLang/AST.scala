@@ -113,8 +113,8 @@ object AST
   abstract class Statement extends Term
 
   case class Block(statements: Seq[Statement]) extends Statement
-  case class VariableDeclaration(ptype: Type, name: String) extends Statement
-  case class VariableDeclarationAssignment(ptype: Type, name: String, expr: Expr) extends Statement
+  case class VariableDeclaration(ptype: Type, id: String) extends Statement
+  case class VariableDeclarationAssignment(id: String, expr: Expr) extends Statement
   case class Assignment(left:Expr, right:Expr) extends Statement
   case class If(expr: Expr, block: Block) extends Statement
   case class IfElse(expr: Expr, trueBlock: Block, falseBlock: Block) extends Statement

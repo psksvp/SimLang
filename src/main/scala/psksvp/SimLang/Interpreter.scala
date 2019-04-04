@@ -63,6 +63,7 @@ object Interpreter
     {
       case Some((_, c :: _ )) => c
       case None               => sys.error(s"memory read value error, Variable($name) does not exist")
+      case _                  => sys.error(s"memory read value error, Variable($name) does not exist")
     }
 
     def getValues(name:String):Seq[Value] = data.get(name) match
@@ -197,6 +198,14 @@ object Interpreter
     case BooleanType() => ArrayValue(Array.fill[Value](size)(BooleanValue(false)), BooleanType())
     case _             => defaultValue(t)
   }
+
+  def typeOf(value:Value):Type = value match
+  {
+    case _:TextValue      => TextType()
+    case _:NumericValue   => NumericType()
+    case _:BooleanValue   => BooleanType()
+    case ArrayValue(a, t) => ArrayType(t, Some(a.length))
+  }
 }
 
 /**
@@ -220,6 +229,7 @@ class Interpreter(program:AST.Program)
 
   def evaluate(expr:Expr): Value = expr match
   {
+    case e:Value                                                    => e
     case Literal(l)                                                 => literal2Value(l)
     case Variable(n)                                                => lookupVar(n) match
                                                                        {
@@ -230,6 +240,7 @@ class Interpreter(program:AST.Program)
     case ArrayRef(v, e)                                             => (evaluate(v), evaluate(e)) match
                                                                        {
                                                                          case (ArrayValue(a, _), NumericValue(i)) => a(i.toInt)
+                                                                         case (TextValue(s), NumericValue(i))     => TextValue(s(i.toInt).toString)
                                                                          case _                                   => sys.error("ArrayRef error")
                                                                        }
 
@@ -257,8 +268,9 @@ class Interpreter(program:AST.Program)
                                                    else
                                                      sys.error(s"duplicate variable $n")
 
-    case VariableDeclarationAssignment(t, n, e) => execute(VariableDeclaration(t, n))
-                                                   execute(Assignment(Variable(n), e))
+    case VariableDeclarationAssignment(id, e)   => val ev = evaluate(e)
+                                                   execute(VariableDeclaration(typeOf(ev), id))
+                                                   execute(Assignment(Variable(id), ev))
 
     case Assignment(Variable(v), e)             => lookupVar(v) match
                                                    {
@@ -347,19 +359,19 @@ class Interpreter(program:AST.Program)
     (name, params) match
     {
       case ("sys.length", Variable(a) :: Nil) => val length = top.memory.getValue(a) match
-                                                  {
-                                                    case ArrayValue(v, _) => v.length
-                                                    case TextValue(v)     => v.length
-                                                    case _                => 1
-                                                  }
-                                                  NumericValue(length)
+                                                 {
+                                                   case ArrayValue(v, _) => v.length
+                                                   case TextValue(v)     => v.length
+                                                   case _                => 1
+                                                 }
+                                                 NumericValue(length)
 
-      case ("sys.print", es)                   => es.foreach{e => print(s"${evaluate(e)} ")}
-                                                  println()
-                                                  defaultResult
+      case ("sys.print", es)                  => es.foreach{e => print(s"${evaluate(e)} ")}
+                                                 println()
+                                                 defaultResult
 
-      case _                                   => val args = for(p <- params) yield evaluate(p)
-                                                  invokeFunction(name, args)
+      case _                                  => val args = for(p <- params) yield evaluate(p)
+                                                 invokeFunction(name, args)
     }
   }
 
@@ -369,13 +381,21 @@ class Interpreter(program:AST.Program)
     {
       case ("sys.length", TextValue(s) :: Nil)                       => NumericValue(s.length)
       case ("sys.length", _)                                         => NumericValue(1)
+
+      case ("text.concat", ts)                                       => val s = for(t <- ts) yield t.toString
+                                                                        TextValue(s.mkString(""))
+
+      case ("text.sub", TextValue(s) :: NumericValue(b) :: NumericValue(e) :: Nil)
+                                                                      => TextValue(s.substring(b.toInt, e.toInt))
+
+
       case ("math.cos", NumericValue(v) :: Nil)                      => NumericValue(math.cos(v).toFloat)
       case ("math.sin", NumericValue(v) :: Nil)                      => NumericValue(math.sin(v).toFloat)
       case ("math.tan", NumericValue(v) :: Nil)                      => NumericValue(math.tan(v).toFloat)
       case ("math.sqrt", NumericValue(v) :: Nil)                     => NumericValue(math.sqrt(v).toFloat)
       case ("math.power", NumericValue(v) :: NumericValue(p) :: Nil) => NumericValue(math.pow(v, p).toFloat)
 
-        
+
       case _          => findFunction(name, params, program) match
                          {
                            case Some(function) => invokeFunction(function, params)
@@ -388,12 +408,15 @@ class Interpreter(program:AST.Program)
   {
     // assume check has been made for functionDef args and binding
     push()
+    //binding
     for((v, b) <- function.signature.args zip binding)
     {
-      top.memory.register(v.name, v.ptype)
-      top.memory(v.name) = b
+      top.memory.register(v.id, v.ptype)
+      top.memory(v.id) = b
     }
+    // return val
     top.memory.register(function.signature.name, function.signature.rtype)
+    // exe
     function.body.statements.foreach{s => execute(s)}
     val rval = top.memory(function.signature.name) // return value
     pop()

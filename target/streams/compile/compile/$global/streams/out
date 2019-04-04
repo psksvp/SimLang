@@ -1,2 +1,4 @@
-[0m[[0m[33mwarn[0m] [0m[0mthere were four feature warnings; re-run with -feature for details[0m
+[0m[[0m[33mwarn[0m] [0m[0m/Users/psksvp/MyCode/SimLang/src/main/scala/psksvp/SimLang/Interpreter.scala:385:31: non-variable type argument psksvp.SimLang.AST.TextValue in type pattern Seq[psksvp.SimLang.AST.TextValue] (the underlying of Seq[psksvp.SimLang.AST.TextValue]) is unchecked since it is eliminated by erasure[0m
+[0m[[0m[33mwarn[0m] [0m[0m      case ("text.concat", ts:Seq[TextValue])                        => val s = for(t <- ts) yield t.value[0m
+[0m[[0m[33mwarn[0m] [0m[0m                              ^[0m
 [0m[[0m[33mwarn[0m] [0m[0mone warning found[0m

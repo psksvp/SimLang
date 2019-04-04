@@ -54,12 +54,12 @@ object Entry
       """
         |function main():numeric
         |{
-        |  var a:Array<numeric>(10)
+        |  var a:array<numeric>(10)
         |  sys.print(a[9])
         |  sys.print(a)
         |  a[9] = 9
         |  sys.print(a)
-        |  var i:numeric = 0
+        |  var i = 0
         |  while(i < 9)
         |  {
         |    a[i + 1] = i * 2
@@ -70,23 +70,30 @@ object Entry
         |  sys.print("The length of text helloworld is", sys.length("helloworld"))
         |
         |
-        |  var b:Array<numeric>
+        |  var b:array<numeric>
         |
         |  b = [1, 2, 3, 4]
         |  sys.print(b)
         |  sys.print("The length of b is ", sys.length(b))
         |
-        |  var c:Array<text> = ["Hello", "World"]
+        |  var c = ["Hello", "World"]
         |  sys.print(c)
+        |
+        |  var strc = "Pongsak"
+        |  sys.print(strc[5])
         |
         |  sys.print(sum(b))
         |  sys.print(b)
+        |
+        |  var re = text.concat("hello ", "world ", "of ", "code", 100, 10.20, false)
+        |
+        |  sys.print(re)
         |}
         |
-        |function sum(a:Array<numeric>):numeric
+        |function sum(a:array<numeric>):numeric
         |{
         |  sum = 0
-        |  var i:numeric = 0
+        |  var i = 0
         |  while(i < sys.length(a))
         |  {
         |    sum = sum + a[i]
@@ -108,8 +115,8 @@ object Entry
       """
         |function main():numeric
         |{
-        |  var m:numeric = sum(23, 45)
-        |  var g:numeric = math.cos(3.14)
+        |  var m = sum(23, 45)
+        |  var g = math.cos(3.14)
         |  sys.print(m)
         |  sys.print(g)
         |  sys.print(sum(10))
@@ -129,7 +136,7 @@ object Entry
         |function sum(a:numeric):numeric
         |{
         |  sum = 0
-        |  var n:numeric = 1
+        |  var n = 1
         |  while(n <= a)
         |  {
         |    sum = sum + n
@@ -154,11 +161,11 @@ object Entry
         |
         |function scope():numeric
         |{
-        |  var m:text = "Hello"
+        |  var m = "Hello"
         |  {
-        |    var m:text = "world"
+        |    var m = "world"
         |    {
-        |      var m:numeric = 85
+        |      var m = 85
         |      sys.print(m)
         |    }
         |    sys.print(m)
