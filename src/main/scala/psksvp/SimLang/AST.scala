@@ -48,7 +48,7 @@ object AST
   case class NumericType() extends Type
   case class BooleanType() extends Type
   case class TextType() extends Type
-  case class ArrayType(ctype:Type, size:Option[Int]) extends Type
+  case class ArrayType(ctype:Type, size:Option[Expr]) extends Type
 
   /////////////////
   abstract class Operator(val resultType: Type)

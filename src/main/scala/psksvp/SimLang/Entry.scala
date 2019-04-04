@@ -42,8 +42,6 @@ object Entry
 
   def main(args:Array[String]):Unit=
   {
-    //parseFuncDef()
-    //casPlay()
     parseArray()
     parseFuncDef()
   }
@@ -89,8 +87,12 @@ object Entry
         |
         |  sys.print(re)
         |
-        |  sys.print(randomA(b))
+        |  randomA(b)
         |  sys.print(b)
+        |  sys.print("----------------")
+        |
+        |  var ra = randomGen(6)
+        |  sys.print(ra)
         |}
         |
         |function sum(a:array<numeric>):numeric
@@ -114,23 +116,19 @@ object Entry
         |    i = i + 1
         |  }
         |}
+        |
+        |function randomGen(a:numeric):array<numeric>
+        |{
+        |  var result:array<numeric>(a)
+        |  var i = 0
+        |  while(i < sys.length(result))
+        |  {
+        |    result[i] = sys.random()
+        |    i = i + 1
+        |  }
+        |  randomGen = result
+        |}
       """.stripMargin
-
-
-
-
-//        |function randomA(a:numeric):array<numeric>
-//        |{
-//        |  var result:array<numeric>(a)
-//        |  var i = 0
-//        |  while(i < sys.length(result))
-//        |  {
-//        |    result[i] = sys.random()
-//        |    i = i + 1
-//        |  }
-//        |  randomA = result
-//        |}
-
 
 
     val p = new Parser().parseProgram(s)

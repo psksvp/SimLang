@@ -112,7 +112,7 @@ class Parser extends JavaTokenParsers with PackratParsers
   lazy val textype:PackratParser[TextType] = "text" ^^ {_ => TextType()}
 
   lazy val arraySpecType:PackratParser[Type] = ("array" ~ "<") ~> varType <~ ">"
-  lazy val arraySpecSize:PackratParser[Int] = "(" ~> wholeNumber <~ ")" ^^ {n => n.toInt}
+  lazy val arraySpecSize:PackratParser[Expr] = "(" ~> expr <~ ")" ^^ {n => n}
 
   lazy val arrayType:PackratParser[ArrayType] = (arraySpecType) ~ (arraySpecSize?) ^^
   {

@@ -184,11 +184,11 @@ object Interpreter
 
   def defaultValue(t:Type):Value = t match
   {
-    case NumericType()             => NumericValue(0)
-    case TextType()                => TextValue("")
-    case BooleanType()             => BooleanValue(false)
-    case ArrayType(at, Some(size)) => defaultArrayValue(at, size)
-    case ArrayType(at, None)       => defaultArrayValue(at, 0)
+    case NumericType()                           => NumericValue(0)
+    case TextType()                              => TextValue("")
+    case BooleanType()                           => BooleanValue(false)
+    case ArrayType(at, Some(NumericValue(size))) => defaultArrayValue(at, size.toInt)
+    case ArrayType(at, None)                     => defaultArrayValue(at, 0)
   }
 
   def defaultArrayValue(t:Type, size:Int):Value = t match
@@ -204,7 +204,7 @@ object Interpreter
     case _:TextValue      => TextType()
     case _:NumericValue   => NumericType()
     case _:BooleanValue   => BooleanType()
-    case ArrayValue(a, t) => ArrayType(t, Some(a.length))
+    case ArrayValue(a, t) => ArrayType(t, Some(NumericValue(a.length)))
   }
 }
 
@@ -263,10 +263,15 @@ class Interpreter(program:AST.Program)
                                                    for(s <- statements) execute(s)
                                                    pop()
 
-    case VariableDeclaration(t, n)              => if(!top.memory.has(n))
-                                                     top.memory.register(n, t)
-                                                   else
-                                                     sys.error(s"duplicate variable $n")
+    case VariableDeclaration(ArrayType(t, Some(e)), id)
+        => evaluate(e) match
+           {
+             case n:NumericValue => declareVariable(ArrayType(t, Some(n)), id)
+             case _              => sys.error("array size must be of type NumericValue(n)")
+           }
+
+
+    case VariableDeclaration(t, id)             => declareVariable(t, id)
 
     case VariableDeclarationAssignment(id, e)   => val ev = evaluate(e)
                                                    execute(VariableDeclaration(typeOf(ev), id))
@@ -352,6 +357,14 @@ class Interpreter(program:AST.Program)
     case And()          => BooleanValue(left.value && right.value)
     case Or()           => BooleanValue(left.value || right.value)
     case _              => sys.error("NOT is not a binary op")
+  }
+
+  def declareVariable(ctype:Type, id:String):Unit =
+  {
+    if(!top.memory.has(id))
+      top.memory.register(id, ctype)
+    else
+      sys.error(s"duplicate variable $id")
   }
 
   def invokeFunction(name:String, params:Seq[Expr], defaultResult:Value):Value =

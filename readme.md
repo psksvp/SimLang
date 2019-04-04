@@ -127,7 +127,9 @@ function main():numeric
 }
 ~~~
 
-The returned value of a function is stored in a variable which has the same identifier as the name of the function. The variable is automatically added to the function scope by default. The type of the variable is the same as the function. The example below shows function main produces a 404 numeric value NumericValue(404).
+The returned value of a function is stored in a variable which has the same identifier as the name of the function. The variable is automatically added to the function scope by default. The type of the variable is the same as the type that function produces. 
+
+The example below shows function main produces a 404 numeric value NumericValue(404). The variable *main* is automatically added to the function scope.
 
 ~~~
 function main():numeric
@@ -137,7 +139,7 @@ function main():numeric
 }
 ~~~
 
-An array is passed to a function by reference.
+An array is passed to and produced from a function by reference.
 
 ~~~
 function main():numeric
@@ -146,6 +148,9 @@ function main():numeric
   sys.print(b)
   randomA(b)
   sys.print(b)
+  
+  var c = randomGen(10)
+  sys.print(c)
 }
 
 function randomA(a:array<numeric>):numeric
@@ -157,11 +162,23 @@ function randomA(a:array<numeric>):numeric
     i = i + 1
   }
 }
+
+function randomGen(a:numeric):array<numeric>
+{
+  var result:array<numeric>(a)
+  var i = 0
+  while(i < sys.length(result))
+  {
+    result[i] = sys.random()
+    i = i + 1
+  }
+  randomGen = result
+}
 ~~~ 
 
 ### Recursion
 
-Recursion is supported. The example below shows a recursion function which sums the number from 1 to a.
+Recursion is supported. The example below shows a recursion function which calculates the sum of the number from 1 to a.
 
 ~~~
 function sum(a:numeric):numeric
