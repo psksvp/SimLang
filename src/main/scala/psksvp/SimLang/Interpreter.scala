@@ -248,9 +248,12 @@ class Interpreter(program:AST.Program)
     case Binary(l:NumericValue, op:BooleanOperator, r:NumericValue) => compute(l, op, r)
     case Binary(l:BooleanValue, op:BooleanOperator, r:BooleanValue) => compute(l, op, r)
 
-    case Binary(TextValue(_), _ , TextValue(_)) |
+    case Binary(TextValue(_), _ , TextValue(_))  |
          Binary(_, _, TextValue(_))              |
-         Binary(TextValue(_), _, _)                                 => sys.error(s"unsupported binary op $expr")
+         Binary(TextValue(_), _, _)              |
+         Binary(_, Plus()|Minus()|Mul()|Div()|Mod(),BooleanValue(_)) |
+         Binary(BooleanValue(_), Plus()|Minus()|Mul()|Div()|Mod(), _)
+                                                                    => sys.error(s"unsupported binary op $expr")
 
     case Binary(l, op, r)                                           => evaluate(Binary(evaluate(l), op, evaluate(r)))
     case Unary(op:Plus, v:NumericValue)                             => NumericValue(+v.value)
