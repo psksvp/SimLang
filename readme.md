@@ -76,6 +76,7 @@ function main():numeric
 * % for modulo
 * == for equality
 * >, <, >=, <=, !=
+* &&, ||
 
 ### Conditional
 
