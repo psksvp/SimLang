@@ -41,7 +41,7 @@ import AST._
 
 object CAS
 {
-  class Expression(val e:Expr)
+  class DSLExpr(val e:Expr)
   {
     def +(other:Expr):Expr = Binary(e, Plus(), other)
     def -(other:Expr):Expr = Binary(e, Minus(), other)
@@ -57,18 +57,23 @@ object CAS
   case class cos(e:Expr) extends Expr
   case class ln(e:Expr) extends Expr
 
-  case class Num(v:Int) extends Expr
-  case class Var(s:String) extends Expr
+  
+  implicit def toExpression(e:Expr):DSLExpr = new DSLExpr(e)
+  implicit def toNum(n:Int):NumericValue = NumericValue(n)
+  implicit def toNum(n:Double):NumericValue = NumericValue(n.toFloat)
+
+  // def simplify(e:Expr):Expr = e match
+  // {
+  //   case ()
+  // }
+
+ def indexLaw(e:Expr):Expr =
+ {
+   case Binary(Binary(x1, Power(), a), Div(), Binary(x2, Power(), b))
+        if x1 == x2 => (x1 ^ (a - b))
+ }
 
 
-  implicit def toExpression(e:Expr):Expression = new Expression(e)
-  implicit def tonum(n:Int):Num = Num(n)
-
-
-//  def indexLaw(e:Expr):Expr =
-//  {
-//    case Binary(Binary(a1, Power(), p)
-//  }
 }
 
 

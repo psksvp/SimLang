@@ -215,7 +215,7 @@ object Entry
   {
     import CAS._
 
-    val e = (Var("x") + 5) * Var("y")
+    //val e = (Var("x") + 5) * Var("y")
     println(e)
   }
 }

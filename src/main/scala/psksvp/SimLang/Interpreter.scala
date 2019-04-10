@@ -260,7 +260,8 @@ class Interpreter(program:AST.Program)
     case Unary(op:Minus, v:NumericValue)                            => NumericValue(-v.value)
     case Unary(op:Not, v:BooleanValue)                              => BooleanValue(!v.value)
 
-    case Unary(_, TextValue(_))                                     => sys.error(s"unsupported unary op $expr")
+    case Unary(Plus() | Minus(), BooleanValue(_)) |
+         Unary(_, TextValue(_))                                     => sys.error(s"unsupported unary op $expr")
 
     case Unary(op, e)                                               => evaluate(Unary(op, evaluate(e)))
     case FunctionCall(n, parms)                                     => invokeFunction(n, parms, NumericValue(0))

@@ -4,7 +4,7 @@
 		module="simlang-build"
 		revision="0.1.0-SNAPSHOT"
 		status="integration"
-		publication="20190401212612"
+		publication="20190405140801"
 		e:sbtVersion="1.0" e:scalaVersion="2.12"
 	>
 		<description>
