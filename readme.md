@@ -131,7 +131,7 @@ function main():numeric
 
 The returned value of a function is stored in a variable which has the same identifier as the name of the function. The variable is automatically added to the function scope by default. The type of the variable is the same as the type that function produces. 
 
-The example below shows function main produces a 404 numeric value NumericValue(404). The variable *main* is automatically added to the function scope.
+The example below shows function main produces a 404 numeric value NumericValue(404). The variable *main* which is the name of the function is automatically added to the function scope.
 
 ~~~
 function main():numeric
@@ -180,7 +180,7 @@ function randomGen(a:numeric):array<numeric>
 
 ### Recursion
 
-Recursion is supported. The example below shows a recursion function which calculates the sum of the number from 1 to a.
+Recursion is supported. The example below shows a recursive function which calculates the sum of the number from 1 to a.
 
 ~~~
 function sum(a:numeric):numeric
